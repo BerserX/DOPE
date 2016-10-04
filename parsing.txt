@@ -1,0 +1,127 @@
+
+		
+//
+Token:
+	.
+Expect: 
+	.	get parent
+	(	set start clause
+	)	if clause_started
+	<	set identifiers to execution stack and create feed-argument stack
+	>	set identifiers to execution stack and create feed-argument stack
+	|	close identifier
+	identifier [a-z0-9_]	aquire identifier
+	
+//
+Token:
+	:
+Expect:
+	(
+	)	if clause_started
+	<	not sure
+	>	not sure
+	|
+	identifier [a-z0-9_]
+
+//	
+Token:
+	#
+Expect:
+	(
+	identifier [0-9]
+
+//
+Token:
+	identifier [0-9]
+Expect:
+	.
+	)	if clause_started
+	|
+	<
+	>
+	identifier [0-9]
+		
+//
+Token:
+	identifier [a-z0-9_]
+Expect:
+	.
+	)	if clause_started
+	|
+	<
+	>
+	identifier [a-z0-9_]
+	
+//
+Token:
+	|
+Expect:
+	.
+	:
+	(
+	#
+	>
+	identifier [a-z0-9_]
+	
+//
+Token:
+	(
+Expect:
+	.
+	:
+	#
+	(
+	<
+	>
+
+//
+Token:
+	)
+Expect:
+	.
+	|
+	)	if clause_started
+	<
+	>
+	
+//
+Token:
+	<
+Expect:
+	.
+	:
+	|
+	(
+	)	if clause_started
+	#
+	identifier [a-z0-9_]
+	
+//
+Token:
+	>
+Expect:
+	.
+	:
+	|
+	(
+	)	if clause_started
+	#
+	identifier [a-z0-9_]
+	
+//
+Token:
+	default
+Expect:
+	.
+	:
+	#
+	(
+	<
+	>
+	identifier [a-z0-9_]
+
+	
+map token to code
+check expectations from previous token
+perform logic based on token code
+define expectations for next token

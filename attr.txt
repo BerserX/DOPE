@@ -1,0 +1,38 @@
+	bit	value	name		purpose
+	----------------------------------------
+	16	1	temporary	is temporary variable stored in RAM only
+	15	2	ascending	is family to its children
+	14	4	descending	is family to its parents
+	13	8	diverging	is family to its siblings
+	12	16	entangled	is family to its instances
+	11	32	public		can be accessed from outside family scope
+	10	64	private		can be accessed by family scope
+	9	128	read		can be read
+	8	256	write		can be written
+	7	512	execute		can be executed
+	6	1024	dope	can access, see and perform any operation on everything (root access)
+	5	2048	anchor		is allowed to execute outside variable in own scope
+	4	4096	argument	is allowed to recieve input arguments
+	3	8192	instance	is an instance of another variable
+	2	16384	binary		is a binary value
+	1	32768	executed	is executed
+	
+// Default record attributes
+
+	1
+	2
+	8
+	64
+	128
+	256
+	512
+	4096
+	=
+	5067
+	
+// Null attributes
+
+	32
+	128
+	=
+	160
