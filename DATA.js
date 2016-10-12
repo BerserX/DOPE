@@ -32,3 +32,18 @@ DOPE.prototype.STATE = {
 		}
 	]
 };
+
+/*
+
+DOPE
+	Device (UEFI)
+		Read GPT
+		Load first sectors
+		Execute kernel
+	Memory
+		Read
+	Register
+		Initiate storage in RAM
+		Write & Read GPT
+
+*/

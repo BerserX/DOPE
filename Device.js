@@ -1,202 +1,191 @@
 
 DOPE.prototype.Device = function () {
-	
-	var list = [],
-		pipes = 2, 
-		tlb = {
-			entries: 4096,
-			vas: [],
-			device: [],
-			lba_start: [],
-			lba_end: [],
-			attributes: [],
-			raid_array: [],
-			raid_element: [],
-			raid_type: []
-		};
-		
+
+	BYTES = {
+			'byte': 1,
+			'char': 2,
+			'int': 4,
+			'long': 8
+	};
+
+	GPT_MAPPING_OFFSET = {
+	'signature': 0,
+	'revision': 8,
+	'header_size': 12,
+	'header_crc32': 16,
+	'reserved1': 20,
+	'current_lba': 24,
+	'backup_lba': 32,
+	'first_lba': 40,
+	'last_lba': 48,
+	'guid': 56,
+	'partition_array_start_lba': 72,
+	'partition_array_length': 80,
+	'partition_array_entries_size': 84,
+	'partition_array_crc32': 88,
+	'reserved2': 92
+	};
+
+	GPT_MAPPING_SIZE = {
+	'signature': BYTES.long,
+	'revision': BYTES.int,
+	'header_size': BYTES.int,
+	'header_crc32': BYTES.int,
+	'reserved1': BYTES.int,
+	'current_lba': BYTES.long,
+	'backup_lba': BYTES.long,
+	'first_lba': BYTES.long,
+	'last_lba': BYTES.long,
+	'guid': 16,
+	'partition_array_start_lba': BYTES.long,
+	'partition_array_entries': BYTES.int,
+	'partition_array_entry_size': BYTES.int,
+	'partition_array_crc32': BYTES.int,
+	'reserved2': -1
+	};
+
 	return {
 		'init': init,
-		'addDevice': addDevice,
+		'initDevices': initDevices,
+		'isDevice': isDevice,
 		'listDevices': listDevices,
-		'queue': queue,
-		'read': read,
-		'write': write,
-		'dread': dread,
-		'dwrite': dwrite
+		'getFirstLBA': getFirstLBA,
+		'getLastLBA': getLastLBA,
+		'hasGPT': hasGPT,
+		'parseGPT': parseGPT,
+		'storeGPT': storeGPT
 	};
-	
+
 	function init () {
-		console.log ("Device module loaded.");
-	}
-	
-	// Add device data image
-	function addDevice (image) {
-		list.push (image);
-		return 1;
+		require ("STATE");
 	}
 
-	function listDevices () {
-		// Ask BIOS for devices
-		tlb.vas = [];
-		tlb.device = [];
-		tlb.lba_start = [];
-		tlb.lba_end = [];
-		tlb.attributes = [];
-		tlb.raid_array = [];
-		tlb.raid_element = [];
-		tlb.raid_type = [];
-		var tlb_index = 0,
-			devices = list.length, 
-			tmp_signature = "";
-		// Iterate devices
-		for (var x = 0; x < devices; x++) {
-			// Check for GPT signature
-			tmp_signature = dread (x, 512, 16);
-			if (tmp_signature === "EFI PART") {
-				// Get header info
-				var partition_entry_start = parseInt (dread (x, 584, 8)), 
-					partition_count = parseInt (dread (x, 592, 4)), 
-					partition_entry_size = parseInt (dread (x, 596, 4));
-				// Validate header integrity
-				// *TO BE IMPLEMENTED*
-					// Fall back to secondary GPT
-					// *TO BE IMPLEMENTED*
-				// Iterate partition entries
-				for (var y = 0; y < partition_count; y++) {
-					// Check for DOPE partition signature
-					tmp_signature = dread (x, partition_entry_start+(y*partition_entry_size), 16);
-					if (tmp_signature == "DOPE MK1") {
-						// Store device in TLB tags
-						tlb.device[tlb_index] = x;
-						// Store VAS in TLB tags
-						tlb.vas[tlb_index] = parseInt (dread (x, partition_entry_start+(y*partition_entry_size+56), 8));
-						// Store LBA start in TLB tags
-						tlb.lba_start[tlb_index] = parseInt (dread (x, partition_entry_start+(y*partition_entry_size+32), 8));
-						// Store LBA end in TLB tags
-						tlb.lba_end[tlb_index] = parseInt (dread (x, partition_entry_start+(y*partition_entry_size+40), 8));
-						// Store attributes in TLB tags
-						tlb.attributes[tlb_index] = parseInt (dread (x, partition_entry_start+(y*partition_entry_size+48), 8));
-						// Store RAID array in TLB tags
-						tlb.raid_array[tlb_index] = parseInt (dread (x, partition_entry_start+(y*partition_entry_size+64), 4));
-						// Store RAID element in TLB tags
-						tlb.raid_element[tlb_index] = parseInt (dread (x, partition_entry_start+(y*partition_entry_size+68), 4));
-						// Store RAID type in TLB tags
-						tlb.raid_type[tlb_index] = parseInt (dread (x, partition_entry_start+(y*partition_entry_size+72), 4));
-						// Advance TLB pointer
-						tlb_index++;
-					}
-				}
-				devices--;
-			}
+	function initDevices () {
+		var x;
+		for (x = 0; x < STATE.devices.length; x++) {
+			STATE.devices[x].data = new Int8Array(new ArrayBuffer(STATE.devices[x].size));
 		}
-		// Validate address spaces, alter overlapping
-		// *TO BE IMPLEMENTED*
-		alert(JSON.stringify (tlb));
 	}
 
-	// Calculate checksum from string
-	function crc32 (str) {
-		var hash = 0;
-		for (var x = 0; x < str.length; x++) {
-			hash =((hash << 5)|(hash >> 27)) + str[x];
+	function isDevice (device) {
+		if (device >= 0 && device < STATE.devices.length) {
+			return true;
 		}
-		return hash;
+		return false;
 	}
 
-	function size (device) {
-		if (device < 0 || device >= list.length) {
-			return 0;
+	function hasGPT (device) {
+		if (STATE.devices[device].gpt !== null) {
+			return true;
 		} else {
-			return list[device];
+			return false;
 		}
 	}
 
-	function type (device) {
-		return 0;
-	}
-
-	function anchor (device) {
-		return 0;
-	}
-
-	function queue (vas_start, vas_end, pipe) {
-		// Validate pipe range
-		if (pipe >= 0 && pipe < pipes) {
-			// Lookup partitions for operation
-			var op_array_index = tlb.entries*pipe, 
-				op_span_vas = [], 
-				op_span_size = [], 
-				op_span_index = 0, 
-				op_span_sum = 0;
-			for (var x = 0; x < tlb.entries; x++) {
-				// Populate the OP span to verify the VAS exists
-				var op_size = tlb.lba_end[x]-tlb.lba_start[x];
-				if (tlb.vas[x] <= vas_end && tlb.vas[x]+op_size >= vas_start) {
-					if (vas_start < tlb.vas[x]) {
-						op_span_vas[op_span_index] = tlb.vas[x];
-					} else {
-						op_span_vas[op_span_index] = vas_start;
-					}
-					if (vas_end < tlb.vas[x]+op_size) {
-						op_span_size[op_span_index] = vas_end-op_span_vas[op_span_index];
-					} else {
-						op_span_size[op_span_index] = tlb.vas[x]+op_size-op_span_vas[op_span_index];
-					}
-					// Subtract overlapping segments
-					for (var y = 0; y < tlb.entries; y++) {
-						if (y != op_span_index && op_span_vas[y] <= op_span_vas[op_span_index]+op_span_size[op_span_index]  && (op_span_size[y]+op_span_size[y]) >= op_span_vas[op_span_index]) {
-							op_span_size[y] -= op_span_size[op_span_index];
-						}
-					}
-					op_span_index++;
-					op_array[op_array_index] = x;
-					op_array_index++;
+	function listDevices (offset) {
+		var x,
+		list = [];
+		if (!isSet (offset)) {
+			offset = 0;
+		} else if (isDevice (offset)) {
+			for (x = offset; x < STATE.devices.length; x++) {
+				if (STATE.devices[x].data !== null) {
+					list.push (x);
 				}
 			}
-			if (op_span_sum < vas_end-vas_start) {
-				return 2;
+		}
+		return list;
+	}
+
+	function getFirstLBA (device) {
+		if (isDevice(device)) {
+			if (hasGPT(device)) {
+				return STATE.devices[device].gpt.first_lba;
 			} else {
-				return 1;
+				return 0;
 			}
 		} else {
-			return 0;
+			return -1;
 		}
 	}
 
-	function read (vas_start, offset, length, pipe) {
-		var buffer = [];
-		// Queue all operation partitions
-		if (queue (vas_start, vas_start+length, pipe) == 1) {
-			// If queueing is successful, start reading
-			for (var x = 0; x < op_array.length; x++) {
-				var op = op_array[x];
-				
+	function getLastLBA (device) {
+		if (isDevice(device)) {
+			if (hasGPT(device)) {
+				return STATE.devices[device].gpt.last_lba;
+			} else {
+				return STATE.devices[device].size-1;
 			}
-			return 1;
 		} else {
-			return 0;
+			return -1;
 		}
 	}
 
-	function write (vas, offset, data, pipe) {
-		return 0;
-	}
-	
-	function dread (device, address, length) {
-		if (list[device].length < address+length) {
-			return 0;
-		} else {
-			return list[device].substr (address, length);
+	function parseGPT (device, sector) {
+		var x,
+			header_crc32,
+			partition_array_crc32,
+			gpt = {};
+		if (isDevice (device)) {
+			readData (device, getAddressFromSector (sector), STATE.devices[device].sector_size);
+			for (x in GPT_MAPPING_OFFSET) {
+				if (x == "guid") {
+					gpt[x] = readString (GPT_MAPPING_OFFSET[x], GPT_MAPPING_SIZE[x]);
+				} else if (GPT_MAPPING_SIZE[x] > 0) {
+					gpt[x] = readBytes (GPT_MAPPING_OFFSET[x], GPT_MAPPING_SIZE[x]);
+				}
+			}
+			writeBytes (GPT_MAPPING_OFFSET.header_crc32, 0, BYTES.int);
+			header_crc32 = hash32 (readString (GPT_MAPPING_OFFSET.signature, gpt.header_size));
+			console.log (header_crc32);
+			readData (device, getSectorByAddress (device, gpt.partition_array_start_lba), gpt.partition_array_entries*gpt.partition_array_entry_size);
+			partition_array_crc32 = hash32 (readString (0, gpt.partition_array_entries*gpt.partition_array_entry_size));
+			if (gpt.header_crc32 != header_crc32) {
+				console.log ("Faulty GPT header checksum!"+header_crc32+":"+gpt.header_crc32);
+			}
+			if (gpt.partition_array_crc32 != partition_array_crc32) {
+				console.log ("Faulty GPT header checksum!");
+			}
+			STATE.devices[device].gpt = gpt;
+			return true;
 		}
+		return false;
 	}
-	
-	function dwrite (device, address, data) {
-		if (list[device].length < address+data.length) {
-			return 0;
-		} else {
-			list[device] = list[device].substr (0, address)+data+list[device].substr (address);
-			return 1;
+
+	function storeGPT (device, sector) {
+		var x,
+			header_crc32,
+			partition_array_crc32,
+			gpt;
+		if (isDevice (device)) {
+			gpt = STATE.devices[device].gpt;
+			for (x in GPT_MAPPING_OFFSET) {
+				if (x == "guid") {
+					writeString (GPT_MAPPING_OFFSET[x], gpt[x]);
+				} else if (GPT_MAPPING_SIZE[x] > 0) {
+					writeBytes (GPT_MAPPING_OFFSET[x], gpt[x],GPT_MAPPING_SIZE[x]);
+				}
+			}
+			writeBytes (GPT_MAPPING_OFFSET.header_crc32, 0, BYTES.int);
+
+			readData (device, getSectorByAddress (device, gpt.partition_array_start_lba), gpt.partition_array_entries*gpt.partition_array_entry_size);
+			partition_array_crc32 = hash32 (readString (0, gpt.partition_array_entries*gpt.partition_array_entry_size));
+
+			readData (device, getAddressFromSector (sector), STATE.devices[device].sector_size);
+			writeBytes (GPT_MAPPING_OFFSET.partition_array_crc32, partition_array_crc32, BYTES.int);
+
+			header_crc32 = hash32 (readString (GPT_MAPPING_OFFSET.signature, gpt.header_size));
+			writeBytes (GPT_MAPPING_OFFSET.header_crc32, header_crc32, BYTES.int);
+
+			writeData (device, getAddressFromSector (sector), STATE.devices[device].sector_size);
+			gpt.header_crc32 = header_crc32;
+			gpt.partition_array_crc32 = partition_array_crc32;
+			return true;
 		}
+		return false;
 	}
-} ();
+
+	function generateGPT (device) {
+
+	}
+};

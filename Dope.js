@@ -9,8 +9,10 @@ function DOPE () {
 		console.log ("Required module: '"+module+"'.");
 		if (!isSet (_self[module])) {
 			console.log ("Required module: '"+module+"' missing.");
+			return false;
 		} else {
 			console.log ("Required module: '"+module+"' found.");
+			return true;
 		}
 	}
 
@@ -60,13 +62,18 @@ function DOPE () {
 		return (~flag & bitmask);
 	}
 
+	debug = function (tag, message) {
+		console.log ("DEBUG["+tag+"] :: "+message);
+	}
+
 	// initialize all modules
 	for (var module in _self) {
 		console.log ("Module: '"+module+"' found.");
 		if (_self[module] instanceof Function) {
 			_self[module] = new _self[module] ();
 			if (isSet (_self[module].init)) {
-				_self[module].init (module);
+				_self[module].prototype.TAG = module;
+				_self[module].init ();
 				console.log ("Module: '"+module+"' initiated.");
 			}
 		}
