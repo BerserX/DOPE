@@ -2,9 +2,9 @@ function DOPE () {
 	if (!(this instanceof DOPE)) {
 		throw new Error ("Constructor cannot be called as a function.");
 	}
-	
+
 	var _self = this;
-	
+
 	require = function require (module) {
 		console.log ("Required module: '"+module+"'.");
 		if (!isSet (_self[module])) {
@@ -13,13 +13,33 @@ function DOPE () {
 			console.log ("Required module: '"+module+"' found.");
 		}
 	}
-	
+
 	isSet = function isSet (variable) {
 		if (variable !== null && typeof variable != "undefined") {
 			return true;
 		}
 	}
-	
+
+	Max = function Max () {
+		var peak = arguments[0];
+		for (var x = 0; x < arguments.length; x++) {
+			if (peak < arguments[x]) {
+				peak = arguments[x];
+			}
+		}
+		return peak;
+	}
+
+	Min = function Min () {
+		var bottom = arguments[0];
+		for (var x = 0; x < arguments.length; x++) {
+			if (bottom > arguments[x]) {
+				bottom = arguments[x];
+			}
+		}
+		return bottom;
+	}
+
 	hash32 = function (str) {
 		var hash = 0;
 		for (var x = 0; x < str.length; x++) {
@@ -27,7 +47,7 @@ function DOPE () {
 		}
 		return hash;
 	}
-	
+
 	setFlag = function (flag, bitmask) {
 		return (flag|bitmask);
 	}
@@ -39,7 +59,7 @@ function DOPE () {
 	clearFlag = function (flag, bitmask) {
 		return (~flag & bitmask);
 	}
-	
+
 	// initialize all modules
 	for (var module in _self) {
 		console.log ("Module: '"+module+"' found.");

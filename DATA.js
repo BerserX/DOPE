@@ -3,7 +3,14 @@ DOPE.prototype.STATE = {
 		{
 			"type": "RAM",
 			"size": 1*1024*1024,
-			"data": ["34564563"],
+			"data": null,
+			"gpt": null,
+			"sector_size": 512
+		},
+		{
+			"type": "HDD",
+			"size": 10*1024*1024,
+			"data": null,
 			"gpt": {
 				'signature': 0,
 				'revision': 1001,
@@ -21,13 +28,6 @@ DOPE.prototype.STATE = {
 				'partition_array_crc32': 0,
 				'reserved2': 0
 			},
-			"sector_size": 512
-		},
-		{
-			"type": "HDD",
-			"size": 10*1024*1024,
-			"data": [],
-			"gpt": null,
 			"sector_size": 512
 		}
 	]

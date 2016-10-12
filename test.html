@@ -7,70 +7,45 @@
 	<script type="text/javascript" src="Bytes.js"></script>
 	<!--script type="text/javascript" src="System.js"></script-->
 	<script type="text/javascript">
-		/*
-																																																		function test () {
 
-																																																			var a = 0b00000110, b = 0b00001011, c;
-
-																																																			console.log ("a: "+binary (a)+", b: "+binary(b));
-
-																																																			while (true) {
-																																																				console.log ("a: "+binary (a)+", b: "+binary(b)+", c: "+binary(c));
-																																																				a = (a ^ b);
-																																																				b = (a & b) << 1;
-																																																				if (b == 0b00000000) {
-																																																					break;
-																																																				}
-																																																			}
-
-																																																			console.log ("a: "+binary (a));
-																																																		}
-
-																																																		function binary (val) {
-																																																			var output = "";
-																																																			for (var x = 0; x < 8; x++) {
-																																																				if (((0b00000001 << x) & val) == (0b00000001 << x)) {
-																																																					output = "1"+output;
-																																																				} else {
-																																																					output = "0"+output;
-																																																				}
-																																																			}
-																																																			return output;
-																																																		}
-																																																		*/
-		/*
-		a	 00001100
-		b	+00000100	c 00001000
-			---------
-		a	 00001000
-		b	+00001000
-			---------
-			 00010000
-
-		a	 00000110
-		b	+00001011
-			---------	c 00000010
-		a	 00001101
-		b	+00000100
-			---------	c 00000100
-		a	 00001001
-		b	+00001000
-			---------	c 00001000
-		a	 00000001
-		b	+00010000
-			---------	c 00000000
-			 00010001
-		*/
 		function init() {
 
-			//test ();
 			ENV = new DOPE();
-			/*
-			var A = Int(14112);
-			var B = Int(5);
+			var start, end;
+			console.log ("Start: "+(start = new Date().getTime ())+" ms");
+/*
+			var A = New(2);
+			var B = New(5);
+			A = Range(A,5,4,1);
+			B = Range(B,13,4,1);
+			//A = Pad (A, -2, 0);
+			//A = Exclude (A, 0, 8);
+			console.log (Bin(A));
+			console.log (Bin(B));
+			console.log (Bin(Merge (B,A)));
+			return;
 			*/
-			var A = Int(356);
-			var B = Int(3);
+
+			var A = Int(14112);
+			var B = Int(30);
+			console.log (A);
+			console.log (B);
+/*
+			var A = Var(8);
+			console.log (Len(A));
+			//return;
+			var B = Var(4);
+			for (var x = 0; x < Len(A); x++) {
+				Set(A, x, 1);
+				Set(B, x, x%2);
+				//
+				console.log (Get(A, x));
+			}
+			console.log(isIdentical(A, B));
+			return;
+*/
+			//var A = Int(356);
+			//var B = Int(3);
 			var C = Shift(Not(A), -5); //Exclude (Not(A), 5, 8);
 			var D;
 
@@ -94,20 +69,27 @@
 			console.log("Equal [A == B]: " + isEqual(A, B));
 			console.log("Identical [A === B]: " + isIdentical(A, B));
 			console.log("Greater: [A > B]: " + isGreater(A, B));
+			//console.log (CONFIG.ram);
 			console.log("Lesser [A < B]: " + isLesser(A, B));
-
+			//return;
 			console.log("// Math operations:");
 			console.log("Add [A + B]: " + Number(A) + " [+] " + Number(B) + " = " + Bin(Trim(D = Add(A, B))) + " = " + Numeric(D));
 			console.log("Subtract [A - B]: " + Number(A) + " [-] " + Number(B) + " = " + Bin(Trim(D = Subtract(A, B))) + " = " + Numeric(D));
 			console.log("Multiply [A * B]: " + Number(A) + " [*] " + Number(B) + " = " + Bin(Trim(D = Multiply(A, B))) + " = " + Numeric(D));
 			console.log("Divide [A / B]: " + Number(A) + " [/] " + Number(B) + " = " + Bin(Trim(D = Divide(A, B))) + " = " + Numeric(D));
 			console.log("Modulo [A % B]: " + Number(A) + " [%] " + Number(B) + " = " + Bin(Trim(D = Modulo(A, B))) + " = " + Numeric(D));
-			console.log("Power [A ^ B]: " + Number(A) + " [^] " + Number(B) + " = " + Bin(Trim(D = Power(A, B))) + " = " + Numeric(D));
-
+			//return;
+			//console.log("Power [A ^ B]: " + Number(A) + " [^] " + Number(B) + " = " + Bin(Trim(D = Power(A, B))) + " = " + Numeric(D));
+			//console.log (Numeric (Multiply(Multiply(Long(100000), Long(100000)), Long(100000))));
+			//console.log (Numeric (Power(Long(100000), Long(30))));
+			return;
 			console.log("// String operations:");
 			console.log("Numeric: " + Numeric(A, 16));
 			console.log("Parse: " + Numeric(Parse("-457", 10), 8));
 			console.log("Textual: " + Textual(Text("asdf")));
+
+			console.log ("End: "+(end = new Date().getTime ())+" ms");
+			console.log ("Runtime: "+(end-start)+" ms");
 
 			/*
 			for (var x = 0; x < 100; x++) {

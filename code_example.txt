@@ -1,0 +1,96 @@
+
+
+var.test = ("asdf"|1234|"qwer")
+
+var.test.Instance << 0 == "asdf"
+
+var.test.Instance << (Range << (0|2|1)) == ("asdf"|1234|"qwer")
+
+(var.test.Instance << ([0:2:1])).hasValue << 1234 == true
+
+(var.test << [0:2:1]).hasValue << (1234|"asdf") == true
+
+((var.test << "Instance") << [0:2:1]).hasValue << "asdf" == true
+
+
+test = {
+
+	If << (
+		.arguments.length != (.arguments.filterType << (Integer|Range)).length
+	{
+		Each << (..arguments
+		{
+			If << (...arguments.isType << Integer
+			{
+				..return = ..value.Instance << 
+			}
+		}) <<
+	}) <<
+	.value = ("asdf"|1234|"qwer")
+}
+
+
+If.Condition << (x < 2)
+If.isTrue << {
+	Alert << "Smaller"
+}
+If.isFalse << {
+	.Condition << (x > 2)
+}
+If.isTrue << {
+	Alert << "Larger"
+}
+
+// Multiple conditions
+
+If.Condition << (x < 2|x > 2|x == 2)
+If.isTrue << {
+	Alert << "Smaller"
+}
+If.isTrue << {
+	Alert << "Larger"
+}
+If.isTrue << {
+	Alert << "Equals"
+}
+
+// Switch like (If inherits the methods of the argument object, allowing for value comparison)
+
+If.Condition << "Value"
+If.Equals << ("asdf")
+If.isTrue << {
+	Alert << "Same string"
+}
+If.Equals << ("qwer")
+If.isTrue << {
+	Alert << "Same string"
+}
+If.Equals << ("Value")
+If.isTrue << {
+	Alert << "Same string"
+}
+
+// Ternary call
+
+If << (x < 2
+{
+	Alert << "Smaller"
+}{
+	Alert << "Larger"
+})
+
+// Switch
+
+Switch.Case << ({
+.Match = "asdf"
+Alert << "Match"
+}{
+.Match = "qwer"
+Alert << "Match"
+}{
+.Match = "Value"
+Alert << "Match"
+})
+
+// For-loop
+For.Condition << 
