@@ -97,6 +97,12 @@ DOPE.prototype.Device = function () {
 		return list;
 	}
 
+	function getSectorSize (device) {
+		if (isDevice(device)) {
+			return STATE.devices[device].sector_size;
+		}
+	}
+
 	function getFirstLBA (device) {
 		if (isDevice(device)) {
 			if (hasGPT(device)) {

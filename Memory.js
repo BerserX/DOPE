@@ -6,19 +6,33 @@ DOPE.prototype.Memory = function () {
 	VAS = {
 		'device': [],
 		'lba': [],
-		'mapping': []
+		'mapping': [],
+		'allocated': [],
+		'first': null,
+		'last': null
+	};
+
+	BUFFER = {
+		'index': [],
+		'length': [],
+		'offset': []
 	};
 
 	return {
 		'init': init,
+		'buildVas': buildVAS,
+		'getVasStart': getVasStart,
+		'getVASEnd': getVASEnd,
+		'getVASAllocation': getVASAllocation,
+		'isAllocated': isAllocated,
 		'isAddress': isAddress,
-		'getAddressFromSector': getAddressFromSector,
 		'isSector': isSector,
+		'getLBAByAddress': getLBAByAddress,
+		'getDeviceByAddress': getDeviceByAddress,
 		'getSectorByAddress': getSectorByAddress,
+		'getAddressBySector': getAddressBySector,
 		'readSectorData': readSectorData,
-		'writeSectorData': writeSectorData,
-		'getSectorOffset': getSectorOffset,
-		'getAddressByOffset': getAddressByOffset
+		'writeSectorData': writeSectorData
 	};
 
 	function init () {
@@ -31,23 +45,79 @@ DOPE.prototype.Memory = function () {
 			x;
 		devices = Device.listDevices ();
 		address = 0;
+		VAS.first = address;
 		for (x = 0; x < devices.length; x++) {
 			VAS.device[x] = devices[x];
 			VAS.lba[x] = Device.getFirstLBA(devices[x]);
-			VAS.mapping = address;
-			address += Device.getLastLBA(devices[x])-Device.getFirstLBA(devices[x]);
+			VAS.mapping[x] = address;
+			VAS.allocated[x] = Device.getLastLBA(devices[x])-Device.getFirstLBA(devices[x]);
+			address += VAS.allocated[x];
 		}
+		VAS.last = address;
 		return address;
 	}
 
-	function getLBAFromVAS (address) {
+	function getVASStart (device) {
+		var x;
+		for (x = 0; x < VAS.devices.length; x++) {
+			if (VAS.devices[x] == device) {
+				return VAS.mapping[x];
+			}
+		}
+	}
+
+	function getVASEnd (device) {
+		var x;
+		for (x = 0; x < VAS.devices.length; x++) {
+			if (VAS.devices[x] == device) {
+				return VAS.mapping[x]+VAS.allocated[x];
+			}
+		}
+	}
+
+	function getVASAllocation (device) {
+		var x;
+		for (x = 0; x < VAS.devices.length; x++) {
+			if (VAS.devices[x] == device) {
+				return VAS.allocated[x];
+			}
+		}
+	}
+
+	function isAllocated (device) {
+		var x;
+		for (x = 0; x < VAS.devices.length; x++) {
+			if (VAS.devices[x] == device) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function isAddress (address) {
+		if (address >= VAS.first && address < VAS.last) {
+			return true;
+		}
+		return false;
+	}
+
+	function isSector (device, sector) {
+		var address;
+		if (isAllocated (device)) {
+			address = Device.getSectorSize(device)*sector;
+			return true;
+		}
+		return false;
+	}
+
+	function getLBAByAddress (address) {
 		var lba,
 			x;
-		vas = -1;
-		if (address > 0) {
+		lba = -1;
+		if (isAddress(address)) {
 			for (x = 0; x < VAS.mapping.length; x++) {
-				if (address < VAS.mapping[x]) {
-					lba = VAS.lba[x-1]+(VAS.mapping[x-1]-address);
+				if (address >= VAS.mapping[x] && address < VAS.mapping[x]+VAS.allocated[x]) {
+					lba = VAS.lba[x]+(VAS.mapping[x]-address);
 					break;
 				}
 			}
@@ -55,98 +125,41 @@ DOPE.prototype.Memory = function () {
 		return lba;
 	}
 
-	function getDeviceFromVAS (address) {
-		var vas;
-		for (var x = 0, vas = address; x < STATE.devices.length; x++) {
-			if (vas > STATE.devices[x].size) {
-				return x;
-			}
-			vas -= STATE.devices[x].size;
-		}
-		return;
-	}
-
-	function isAddress (device, address) {
-		if (isDevice (device)) {
-			if (address >= 0 && address < STATE.devices[device].size) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	function getAddressFromSector (device, sector) {
-		if (isSector (device, sector)) {
-			return STATE.devices[device].sector_size*sector;
-		}
-		return -1;
-	}
-
-	function isSector (device, sector) {
-		if (isDevice (device)) {
-			if (sector >= 0 && sector < STATE.devices[device].size/STATE.devices[device].sector_size) {
-				if (STATE.devices[device].data.length < sector) {
-					STATE.devices[device].data.length = sector;
+	function getDeviceByAddress (address) {
+		var device,
+			x;
+		device = -1;
+		if (isAddress(address)) {
+			for (x = 0; x < VAS.mapping.length; x++) {
+				if (address >= VAS.mapping[x] && address < VAS.mapping[x]+VAS.allocated[x]) {
+					device = VAS.device[x];
+					break;
 				}
 			}
-			return true;
 		}
-		return false;
+		return device;
 	}
 
-	function getSectorByAddress (device, address) {
-		if (isAddress (device, address)) {
-			return ((address-(address%STATE.devices[device].sector_size))/STATE.devices[device].sector_size);
+	function getSectorByAddress (address) {
+		var sector;
+		sector = -1;
+		if (isAddress(address)) {
+			sector = (getLBAFromVAS(address)-(address%Device.getSectorSize(device)))/Device.getSectorSize(device);
 		}
-		return -1;
+		return sector;
 	}
 
-	function readSectorData (device, sector) {
-		if (isSector (device, sector)) {
-			if (!isSet(STATE.devices[device].data[sector])) {
-				//STATE.devices[device].data[sector] = "";
-				STATE.devices[device].data[sector] = new ArrayBuffer (STATE.devices[device].sector_size);
-			}
-			BUFFER.sector = STATE.devices[device].data[sector];
-			BUFFER.sector += new Array (STATE.devices[device].sector_size-BUFFER.sector.length+1).join ("0");
-			return true;
-		}
-		return false;
-	}
-
-	function writeSectorData (device, sector) {
-		if (isSector (device, sector)) {
-			if (!isSet(STATE.devices[device].data[sector])) {
-				//STATE.devices[device].data[sector] = "";
-				STATE.devices[device].data[sector] = new ArrayBuffer (STATE.devices[device].sector_size);
-			}
-			STATE.devices[device].data[sector] = BUFFER.sector;
-			return true;
-		}
-		return false;
-	}
-
-	function getSectorOffset (device, address, sector) {
-		if (!isSet (sector) || !isSector (sector)) {
-			sector = 0;
-		}
-		if (isAddress (device, address)) {
-			return address-(sector*STATE.devices[device].sector_size);
-		}
-		return 0;
-	}
-
-	function getAddressByOffset (device, offset, sector) {
+	function getAddressBySector (device, sector) {
 		var address;
-		if (!isSet (sector) || !isSector (sector)) {
-			sector = 0;
+		address = -1;
+		if (isSector (device, sector)) {
+			address = Device.getSectorSize (device)*sector;
+			if (address < getVASAllocation(device)) {
+				address += getVASStart (device);
+			} else {
+				address = -1;
+			}
 		}
-		if (!isSet (offset) || !isSector (offset)) {
-			offset = 0;
-		}
-		if (isAddress (device, address = offset+getAddressBySector (device, sector))) {
-			return address;
-		}
-		return 0;
+		return address;
 	}
-}
+};
